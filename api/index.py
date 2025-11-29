@@ -1,17 +1,16 @@
-from fastapi import FastAPI, Query
+from fastapi import FastAPI, Query, HTTPException
 from fastapi.responses import JSONResponse
 from mangum import Mangum
+from supabase import create_client, Client
 import os
 
-# 初始化 FastAPI
 app = FastAPI()
 
 @app.get("/api")
-async def keepalive(key: str = Query(...)):
-    """Keepalive endpoint to prevent Supabase database from going idle"""
-    
+async def keepalive(key: str = Query(..., description="Access key")):
+    """Keepalive endpoint"""
     # 验证访问密钥
-    access_key = os.environ.get("ACCESS_KEY")
+    access_key = os.getenv("ACCESS_KEY")
     if not access_key or key != access_key:
         return JSONResponse(
             status_code=403,
@@ -19,22 +18,15 @@ async def keepalive(key: str = Query(...)):
         )
     
     try:
-        # 延迟导入 supabase(避免初始化时出错)
-        from supabase import create_client, Client
-        
         # 获取环境变量
-        supabase_url = os.environ.get("SUPABASE_URL")
-        supabase_key = os.environ.get("SUPABASE_KEY")
-        table_name = os.environ.get("TABLE_NAME")
+        supabase_url = os.getenv("SUPABASE_URL")
+        supabase_key = os.getenv("SUPABASE_KEY")
+        table_name = os.getenv("TABLE_NAME")
         
-        # 验证环境变量
         if not all([supabase_url, supabase_key, table_name]):
             return JSONResponse(
                 status_code=500,
-                content={
-                    "status": "error",
-                    "message": "Missing required environment variables"
-                }
+                content={"status": "error", "message": "Missing env variables"}
             )
         
         # 连接 Supabase
@@ -46,27 +38,19 @@ async def keepalive(key: str = Query(...)):
         return {
             "status": "success",
             "message": "Keepalive ping successful",
-            "table": table_name,
-            "records_checked": len(response.data) if response.data else 0
+            "table": table_name
         }
         
     except Exception as e:
         return JSONResponse(
             status_code=500,
-            content={
-                "status": "error",
-                "message": str(e)
-            }
+            content={"status": "error", "message": str(e)}
         )
 
 @app.get("/")
 async def root():
-    """Health check endpoint"""
-    return {
-        "status": "ok",
-        "message": "Supabase Keep-Alive Service",
-        "endpoint": "/api?key=YOUR_ACCESS_KEY"
-    }
+    """Health check"""
+    return {"status": "ok", "message": "Service is running"}
 
-# 🔥 关键:Vercel Lambda handler
-handler = Mangum(app, lifespan="off")
+# 🔥 关键：Vercel 需要这个 handler
+handler = Mangum(app)
