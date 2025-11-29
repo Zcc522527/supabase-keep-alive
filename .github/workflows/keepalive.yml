@@ -1,10 +1,9 @@
-```yaml
 name: Supabase Keepalive
 
 on:
   schedule:
-    - cron: '0 0 * * *'  # 每天 UTC 0点
-  workflow_dispatch:
+    - cron: '0 0 * * *'  # 每天 UTC 0点运行
+  workflow_dispatch:  # 允许手动触发
 
 jobs:
   ping:
@@ -12,4 +11,4 @@ jobs:
     steps:
       - name: Ping Endpoint
         run: |
-          curl -f "https://your-project.vercel.app/api?key=${{ secrets.ACCESS_KEY }}" || exit 1
+          curl -f "https://supabase-keep-alive-roan.vercel.app/api?key=${{ secrets.ACCESS_KEY }}" || exit 1
