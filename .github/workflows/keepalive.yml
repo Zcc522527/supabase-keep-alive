@@ -11,4 +11,4 @@ jobs:
     steps:
       - name: Ping Endpoint
         run: |
-          curl -f "https://supabase-keep-alive-roan.vercel.app/api/keepalive?key=${{ secrets.ACCESS_KEY }}" || exit 1
+          curl -f "https://supabase-keep-alive-ruddy.vercel.app/api?key=${{ secrets.ACCESS_KEY }}" || exit 1
